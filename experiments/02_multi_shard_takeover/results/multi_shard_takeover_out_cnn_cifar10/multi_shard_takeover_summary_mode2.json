@@ -1,0 +1,75 @@
+{
+  "takeover_record": {
+    "anchor_shard": 0,
+    "target_shard": 2,
+    "shards_attempted": 3,
+    "shards_successful": 2,
+    "total_epochs": 226,
+    "total_steps": 9040,
+    "total_wall_time_s": 193.34069925080985,
+    "per_shard_records": [
+      {
+        "shard_id": 0,
+        "epochs": 47,
+        "steps": 1880,
+        "wall_time_s": 40.22380420891568,
+        "acc": 0.7145,
+        "owner_det": 0.796875,
+        "attacker_det": 1.0,
+        "success": true
+      },
+      {
+        "shard_id": 1,
+        "epochs": 79,
+        "steps": 3160,
+        "wall_time_s": 67.33574029197916,
+        "acc": 0.7185,
+        "owner_det": 0.796875,
+        "attacker_det": 1.0,
+        "success": true
+      },
+      {
+        "shard_id": 2,
+        "epochs": 100,
+        "steps": 4000,
+        "wall_time_s": 85.781154749915,
+        "acc": 0.702,
+        "owner_det": 0.8359375,
+        "attacker_det": 1.0,
+        "success": false
+      }
+    ],
+    "overall_success": false
+  },
+  "overall_success_binary": 0,
+  "overall_success_margin": -0.009895833333333326,
+  "honest_total_time_s": 18.65493862498552,
+  "honest_shard_time_per_shard_s": 6.218312874995172,
+  "cost_ratio": 10.36404906697783,
+  "args": {
+    "owner_checkpoints": "owner_training_out/owner_checkpoints.json",
+    "outdir": "multi_shard_takeover_out",
+    "device": "mps",
+    "dataset": "cifar10",
+    "model": "cnn",
+    "train_subset": 5000,
+    "test_subset": 2000,
+    "batch_size": 128,
+    "attack_lr": 0.05,
+    "attack_epochs_max": 100,
+    "attack_lambda": 0.5,
+    "blind_erasure_lambda": 0.1,
+    "target_shard": 2,
+    "wm_bits": 256,
+    "wm_params": 4096,
+    "tau_embed": 0.9,
+    "tau_erase": 0.8,
+    "acc_min": 0.65,
+    "plot_time_curves": true,
+    "time_unit_seconds": true,
+    "honest_shard_time": null,
+    "attack_mode": "mode2",
+    "seed": 123
+  },
+  "time_to_pass_epochs": 34.792400875128806
+}

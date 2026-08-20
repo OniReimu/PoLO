@@ -1,0 +1,70 @@
+# CPU Configuration Example
+# This is a REFERENCE configuration showing optimal settings for CPU-only training
+# Copy relevant settings to your main config.yaml as needed
+
+# Model Configuration
+model:
+  name: "meta-llama/Meta-Llama-3.1-8B"  # Heavier; for reference only on CPU
+  cache_dir: "./models"
+  torch_dtype: "float32"  # Use float32 for CPU compatibility
+  device_map: "auto"
+
+# Watermark Configuration
+watermark:
+  bit_length: 64  # Smaller watermark for faster CPU training
+  embedding_strength: 0.001
+  match_success_threshold: 0.85  # Lower threshold for CPU
+  target_layers: ["c_attn", "c_proj"]  # GPT-2 layers
+
+# Training Configuration (optimized for CPU)
+training:
+  epochs: 2  # Fewer epochs for CPU
+  learning_rate: 5e-5
+  batch_size: 1  # Very small batch size for CPU
+  gradient_accumulation_steps: 8  # More accumulation to compensate
+  warmup_steps: 50
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  save_strategy: "epoch"
+  evaluation_strategy: "epoch"
+  logging_steps: 5
+
+# Loss Function Configuration
+loss:
+  base_loss_weight: 1.0
+  watermark_loss_weight: 0.1
+  
+# Dataset Configuration
+dataset:
+  name: "wikitext"
+  config_name: "wikitext-2-raw-v1"
+  max_length: 256  # Shorter sequences for CPU
+  train_size: 100  # Much smaller dataset for CPU
+
+# Evaluation Configuration
+evaluation:
+  metrics: ["perplexity"]  # Fewer metrics for speed
+  eval_batch_size: 2
+  max_eval_samples: 50
+
+# Output Configuration
+output:
+  model_dir: "./watermarked_model_cpu"
+  logs_dir: "./logs"
+  results_file: "./results_cpu.json"
+  
+# Hardware Configuration - CPU Optimized
+hardware:
+  # Force CPU device
+  force_device: "cpu"
+  
+  # Disable mixed precision for CPU
+  mixed_precision: false
+  
+  # CPU-specific optimizations
+  cpu:
+    num_threads: -1  # Use all available CPU threads
+  
+  # Data loading optimized for CPU
+  dataloader_num_workers: 2   # Conservative for CPU
+  pin_memory: false           # Not applicable for CPU
