@@ -1,0 +1,129 @@
+# Configuration file for LLM Watermark Fine-tuning
+
+# Model Configuration
+model:
+  # name: "microsoft/DialoGPT-medium"  # Open alternative (~345M params, similar architecture)
+  name: "EleutherAI/gpt-neo-1.3B"
+  # name: "meta-llama/Meta-Llama-3.1-8B"
+  cache_dir: "./models"  # Local cache directory for downloaded models
+  torch_dtype: "float32"  # Use float32 on MPS to avoid NaNs
+  device_map: "auto"  # Device mapping strategy
+
+# Watermark Configuration (Basic settings)
+watermark:
+  enabled: false
+  bit_length: 512  # 512-bit watermark for basic test
+  embedding_strength: 10  # Stronger watermark signal for faster embedding
+  # Llama3.1 target layers (self-attn + MLP projections)
+  target_layers: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+  match_success_threshold: 0.7  # Realistic threshold for watermark success
+
+# Training Configuration (Dynamic watermark-based stopping)
+training:
+  max_epochs: 10  # Allow enough epochs to reach threshold
+  min_epochs: 1   # Minimum epochs before checking watermark
+  learning_rate: 0.0002
+  batch_size: 4  # More efficient batch size
+  gradient_accumulation_steps: 2
+  warmup_steps: 5  # Minimal warmup
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  save_strategy: "epoch"
+  evaluation_strategy: "epoch"  # Enable evaluation for language task tracking
+  eval_steps: 1  # Evaluate every epoch
+  logging_steps: 2
+  
+  # Dynamic stopping criteria
+  early_stopping:
+    enabled: true
+    patience: 2  # Stop if watermark doesn't improve for 2 epochs
+    check_every_epoch: true  # Check watermark match rate every epoch
+  
+  # Shard-based training (when both watermark + language learning enabled)
+  shard_training:
+    enabled: true  # Enable shard-based training when base_loss_weight > 0
+    max_shards: 10  # Maximum number of shards before stopping
+    language_patience: 2  # Stop if language performance doesn't improve for N epochs
+    min_language_improvement: 0.01  # Minimum improvement in eval loss to continue
+    language_eval_frequency: 1  # Evaluate language task every N epochs
+    language_success_threshold: 1.5  # Target language modeling loss (lower is better)
+    # language_success_threshold: 3.6  # Target language modeling loss (lower is better)
+
+# Loss Function Configuration
+loss:
+  # DUAL-PURPOSE TRAINING CONTROL:
+  # For PURE WATERMARK EMBEDDING: base_loss_weight: 0.0, watermark_loss_weight: 100.0
+  # For WATERMARK + LANGUAGE LEARNING: base_loss_weight: 1.0, watermark_loss_weight: 10.0
+  base_loss_weight: 1.0  # Enable language modeling loss (set to 0.0 for pure watermark embedding)
+  watermark_loss_weight: 1.0  # Watermark embedding strength (reduce when base_loss is enabled)
+  
+# Dataset Configuration (Modern conversational data)
+dataset:
+  # Use a dataset updated after Llama 3.1's Mar 2023 cutoff
+  name: "allenai/wildchat"  # Updated post-2023 conversations
+  config_name: null
+  max_length: 512
+  train_size: 1000
+  # name: "wikitext"
+  # config_name: "wikitext-2-raw-v1"
+  # max_length: 512
+  # train_size: 1000
+
+# Evaluation Configuration (Realistic settings)
+evaluation:
+  metrics: ["perplexity"]  # Core metrics
+  eval_batch_size: 8  # Efficient batch size
+  max_eval_samples: 500  # More substantial evaluation set
+
+# Finetuning Strategy (standard or lora). LoRA is PEFT and fully compatible with watermarking.
+finetune:
+  strategy: "lora"   # "standard" or "lora"
+  lora:
+    r: 8
+    alpha: 16
+    dropout: 0.05
+    # target_modules defaults to watermark.target_layers when omitted
+
+# Output Configuration
+output:
+  model_dir: "./watermarked_model"
+  logs_dir: "./logs"
+  results_file: "./results.json"
+  csv_dir: "./output"
+  
+# Hardware Configuration
+hardware:
+  # Device selection priority: auto, cuda, mps, cpu
+  # - auto: automatically select best available device
+  # - cuda: use NVIDIA CUDA GPU (if available)
+  # - mps: use Apple Metal Performance Shaders (if available)
+  # - cpu: use CPU only
+  device: "auto"
+  
+  # Force specific device (overrides auto-detection)
+  # Uncomment to force a specific device:
+  # force_device: "cuda"    # Force CUDA
+  # force_device: "mps"     # Force Apple MPS
+  # force_device: "cpu"     # Force CPU
+  
+  # Mixed precision training (recommended for GPU)
+  mixed_precision: false
+  
+  # Device-specific settings
+  cuda:
+    # CUDA-specific optimizations
+    allow_tf32: true          # Allow TensorFloat-32 on Ampere GPUs
+    benchmark_cudnn: true     # Enable cuDNN benchmarking
+    deterministic: false      # Set to true for reproducible results (slower)
+  
+  mps:
+    # Apple MPS-specific settings
+    fallback_to_cpu: true     # Fallback to CPU for unsupported operations
+  
+  cpu:
+    # CPU-specific settings
+    num_threads: -1           # Number of CPU threads (-1 for auto)
+    
+  # Data loading configuration
+  dataloader_num_workers: 0   # Disabled for demo stability
+  pin_memory: false           # Disabled for MPS compatibility

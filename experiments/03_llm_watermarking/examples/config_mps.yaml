@@ -1,0 +1,71 @@
+# Apple MPS Configuration Example  
+# This is a REFERENCE configuration showing optimal settings for Apple Silicon (M1/M2/M3)
+# Copy relevant settings to your main config.yaml as needed
+
+# Model Configuration
+model:
+  name: "meta-llama/Meta-Llama-3.1-8B"
+  cache_dir: "./models"
+  torch_dtype: "float16"  # Use float16 for memory efficiency on MPS
+  device_map: "auto"
+
+# Watermark Configuration
+watermark:
+  bit_length: 128
+  embedding_strength: 0.001
+  match_success_threshold: 0.90  # Threshold for MPS
+  target_layers: ["q_proj", "k_proj", "v_proj", "o_proj"]
+
+# Training Configuration (optimized for MPS)
+training:
+  epochs: 3
+  learning_rate: 5e-5
+  batch_size: 4  # Conservative batch size for MPS memory
+  gradient_accumulation_steps: 4  # Compensate with accumulation
+  warmup_steps: 100
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  save_strategy: "epoch"
+  evaluation_strategy: "epoch"
+  logging_steps: 10
+
+# Loss Function Configuration
+loss:
+  base_loss_weight: 1.0
+  watermark_loss_weight: 0.1
+  
+# Dataset Configuration
+dataset:
+  # Use post-2023-03 dataset (modern conversations updated after cutoff)
+  name: "allenai/wildchat"
+  config_name: null
+  max_length: 512
+  train_size: 1000
+
+# Evaluation Configuration
+evaluation:
+  metrics: ["perplexity", "bleu", "rouge"]
+  eval_batch_size: 8  # Conservative eval batch for MPS
+  max_eval_samples: 200
+
+# Output Configuration
+output:
+  model_dir: "./watermarked_model_mps"
+  logs_dir: "./logs"
+  results_file: "./results_mps.json"
+  
+# Hardware Configuration - Apple MPS Optimized
+hardware:
+  # Force MPS device
+  force_device: "mps"
+  
+  # Mixed precision - may have limited support on MPS
+  mixed_precision: false  # Disabled for MPS compatibility
+  
+  # Apple MPS-specific settings
+  mps:
+    fallback_to_cpu: true   # Enable CPU fallback for unsupported ops
+  
+  # Data loading optimized for Apple Silicon
+  dataloader_num_workers: 4   # Conservative number for Apple Silicon
+  pin_memory: false           # Not needed for MPS

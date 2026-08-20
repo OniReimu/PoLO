@@ -1,0 +1,73 @@
+# CUDA GPU Configuration Example
+# This is a REFERENCE configuration showing optimal settings for NVIDIA CUDA GPUs
+# Copy relevant settings to your main config.yaml as needed
+
+# Model Configuration
+model:
+  name: "meta-llama/Meta-Llama-3.1-8B"
+  cache_dir: "./models"
+  torch_dtype: "float16"  # Use float16 for memory efficiency
+  device_map: "auto"
+
+# Watermark Configuration  
+watermark:
+  bit_length: 128
+  embedding_strength: 0.001
+  match_success_threshold: 0.95  # High threshold for GPU
+  target_layers: ["q_proj", "k_proj", "v_proj", "o_proj"]
+
+# Training Configuration (optimized for GPU)
+training:
+  epochs: 3
+  learning_rate: 5e-5
+  batch_size: 8  # Larger batch size for GPU
+  gradient_accumulation_steps: 2
+  warmup_steps: 100
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  save_strategy: "epoch"
+  evaluation_strategy: "epoch"
+  logging_steps: 10
+
+# Loss Function Configuration
+loss:
+  base_loss_weight: 1.0
+  watermark_loss_weight: 0.1
+  
+# Dataset Configuration
+dataset:
+  # Use post-2023-03 dataset (modern conversations updated after cutoff)
+  name: "allenai/wildchat"
+  config_name: null
+  max_length: 512
+  train_size: 1000
+
+# Evaluation Configuration
+evaluation:
+  metrics: ["perplexity", "bleu", "rouge"]
+  eval_batch_size: 16  # Larger eval batch for GPU
+  max_eval_samples: 200
+
+# Output Configuration
+output:
+  model_dir: "./watermarked_model_cuda"
+  logs_dir: "./logs"
+  results_file: "./results_cuda.json"
+  
+# Hardware Configuration - CUDA Optimized
+hardware:
+  # Force CUDA device
+  force_device: "cuda"
+  
+  # Enable mixed precision for memory efficiency
+  mixed_precision: true
+  
+  # CUDA-specific optimizations
+  cuda:
+    allow_tf32: true          # Enable TensorFloat-32 on Ampere GPUs
+    benchmark_cudnn: true     # Enable cuDNN benchmarking for speed
+    deterministic: false      # Allow non-deterministic for speed
+  
+  # Data loading optimized for GPU
+  dataloader_num_workers: 8   # More workers for GPU
+  pin_memory: true            # Pin memory for faster GPU transfer
